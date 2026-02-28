@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+streamlit
+pandas
+numpy
+scikit-learn
+supabase
+PyMuPDF
+beautifulsoup4
+google-generativeai
