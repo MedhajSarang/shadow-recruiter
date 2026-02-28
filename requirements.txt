@@ -8,3 +8,4 @@ supabase
 PyMuPDF
 beautifulsoup4
 google-genai
+python-multipart
