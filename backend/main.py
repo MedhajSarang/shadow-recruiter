@@ -1,4 +1,5 @@
 from fastapi import FastAPI, File, UploadFile, Form
+from pydantic import BaseModel
 import shutil
 import os
 
@@ -8,7 +9,11 @@ from backend.services.data_cleaner import clean_text
 from backend.services.scraper import scrape_job_description
 from backend.services.ml_engine import calculate_match_score, extract_missing_keywords
 from backend.services.db_service import log_interview_session
-from backend.services.ai_service import generate_interview_question
+from backend.services.ai_service import generate_interview_question, evaluate_candidate_answer
+
+class ChatPayload(BaseModel):
+    question: str
+    answer: str
 
 app = FastAPI(title="Shadow Recruiter API")
 
@@ -49,6 +54,22 @@ async def analyze_application(
             "match_score": match_score,
             "missing_skills": missing_skills,
             "interview_question": question
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+    
+# Add this to your imports at the top of main.py if it's not already there:
+# from backend.services.ai_service import evaluate_candidate_answer
+
+@app.post("/api/chat")
+async def chat_with_recruiter(payload: ChatPayload):
+    try:
+        # Pass the data to the Shadow Recruiter
+        feedback = evaluate_candidate_answer(payload.question, payload.answer)
+        
+        return {
+            "status": "success",
+            "feedback": feedback
         }
     except Exception as e:
         return {"status": "error", "message": str(e)}

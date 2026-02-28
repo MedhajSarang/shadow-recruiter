@@ -36,6 +36,33 @@ def generate_interview_question(job_role: str, missing_skills: list) -> str:
     except Exception as e:
         return f"AI Error: {str(e)}"
 
+def evaluate_candidate_answer(question: str, answer: str) -> str:
+    """Evaluates the candidate's answer to the technical question."""
+    
+    prompt = f"""
+    You are the expert, strict Technical Recruiter. 
+    Earlier, you asked the candidate this question: "{question}"
+    
+    The candidate provided this answer: "{answer}"
+    
+    Your task:
+    1. Grade their answer brutally but fairly.
+    2. Point out exactly what they got wrong or missed.
+    3. If they nailed it, acknowledge it, but tell them how a Senior Engineer would have answered it better.
+    4. Give them a rating out of 10 at the very end.
+    
+    Do not break character. Speak directly to the candidate.
+    """
+    
+    try:
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+        )
+        return response.text.strip()
+    except Exception as e:
+        return f"AI Evaluation Error: {str(e)}"
+
 # --- TEST BLOCK ---
 if __name__ == "__main__":
     print("Waking up Shadow Recruiter via Official SDK...\n")
