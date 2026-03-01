@@ -15,15 +15,30 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []  
 if "current_question" not in st.session_state:
     st.session_state.current_question = ""
+if "candidate_name" not in st.session_state:
+    st.session_state.candidate_name = None
+
+# --- LOGIN GATE ---
+if not st.session_state.candidate_name:
+    st.warning("Authentication Required")
+    name_input = st.text_input("Enter your full name to access your workspace:")
+    if st.button("Enter Workspace"):
+        if name_input.strip():
+            st.session_state.candidate_name = name_input.strip()
+            st.rerun()
+        else:
+            st.error("Name cannot be blank.")
+    st.stop() # This completely halts the UI until they log in
 
 # --- NAVIGATION ---
 st.sidebar.title("Navigation")
 page = st.sidebar.radio("Go to:", ["Mock Interview", "Interview History"])
 
 st.title("Shadow Recruiter AI 🤖")
+st.success(f"Welcome to the terminal, {st.session_state.candidate_name}.")
 
 # ==========================================
-# PAGE 1: MOCK INTERVIEW (Your existing code)
+# PAGE 1: MOCK INTERVIEW
 # ==========================================
 if page == "Mock Interview":
     st.markdown("Your data-driven mock interview agent.")
@@ -40,11 +55,13 @@ if page == "Mock Interview":
             resume_pdf = st.file_uploader("Upload Your Resume (PDF):", type=["pdf"])
 
         if st.button("Initialize Shadow Recruiter"):
+            # If everything is filled, proceed. If not, hit the else block below.
             if job_url and job_role and resume_pdf:
                 with st.spinner("Analyzing application... This takes about 10 seconds."):
                     try:
                         files = {"resume": (resume_pdf.name, resume_pdf.getvalue(), "application/pdf")}
-                        data = {"job_url": job_url, "job_role": job_role}
+                        # Sending the candidate name to the backend for the database
+                        data = {"job_url": job_url, "job_role": job_role, "candidate_name": st.session_state.candidate_name}
                         
                         response = requests.post("http://127.0.0.1:8000/api/analyze", data=data, files=files)
                         
@@ -63,6 +80,7 @@ if page == "Mock Interview":
             else:
                 st.warning("Strict requirement: Provide Job URL, Job Role, and Resume PDF.")
 
+    # Show the dashboard only after the analysis is done
     if st.session_state.analysis_complete:
         if st.sidebar.button("Reset Current Interview"):
             st.session_state.clear()
@@ -113,7 +131,7 @@ if page == "Mock Interview":
                         st.error(f"Connection error: {e}")
 
 # ==========================================
-# PAGE 2: INTERVIEW HISTORY (The New Code)
+# PAGE 2: INTERVIEW HISTORY
 # ==========================================
 elif page == "Interview History":
     st.header("Your Historical Performance")
@@ -122,23 +140,18 @@ elif page == "Interview History":
     if st.button("Fetch Latest Data"):
         with st.spinner("Pulling records from cloud database..."):
             try:
-                response = requests.get("http://127.0.0.1:8000/api/history")
+                # Dynamically passing your specific name to fetch only your records
+                response = requests.get(f"http://127.0.0.1:8000/api/history/{st.session_state.candidate_name}")
                 if response.status_code == 200 and response.json().get("status") == "success":
                     data = response.json()["data"]
                     
                     if not data:
                         st.info("No interview history found yet. Go crush a mock interview!")
                     else:
-                        # Convert the raw JSON from Supabase into a clean Pandas DataFrame
                         df = pd.DataFrame(data)
-                        
-                        # Clean up the timestamp for readability
                         df['created_at'] = pd.to_datetime(df['created_at']).dt.strftime('%Y-%m-%d %H:%M')
-                        
-                        # Select and rename columns for the UI
                         display_df = df[['created_at', 'job_role', 'match_score', 'missing_skills']]
                         display_df.columns = ['Date', 'Job Role', 'Match Score (%)', 'Missing Skills Detected']
-                        
                         st.dataframe(display_df, use_container_width=True, hide_index=True)
                 else:
                     st.error("Failed to retrieve data from backend.")

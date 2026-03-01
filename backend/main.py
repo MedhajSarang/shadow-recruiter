@@ -21,7 +21,8 @@ app = FastAPI(title="Shadow Recruiter API")
 @app.post("/api/analyze")
 async def analyze_application(
     job_url: str = Form(...), 
-    job_role: str = Form(...), 
+    job_role: str = Form(...),
+    candidate_name: str = Form(...),
     resume: UploadFile = File(...)
 ):
     try:
@@ -44,7 +45,7 @@ async def analyze_application(
         missing_skills = extract_missing_keywords(clean_resume, clean_jd)
         
         # 5. Database Memory Injection
-        log_interview_session(job_role, match_score, missing_skills, clean_resume, clean_jd)
+        log_interview_session(job_role, match_score, missing_skills, clean_resume, clean_jd, candidate_name)
         
         # 6. AI Brain Question Generation
         question = generate_interview_question(job_role, missing_skills)
@@ -75,10 +76,10 @@ async def chat_with_recruiter(payload: ChatPayload):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
-@app.get("/api/history")
-async def fetch_history():
+@app.get("/api/history/{candidate_name}")
+async def fetch_history(candidate_name: str):
     try:
-        data = get_interview_history()
+        data = get_interview_history(candidate_name)
         return {
             "status": "success",
             "data": data
