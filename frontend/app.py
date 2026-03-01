@@ -31,7 +31,7 @@ if not st.session_state.candidate_name:
         if st.button("Secure Login"):
             if log_username and log_password:
                 with st.spinner("Authenticating..."):
-                    resp = requests.post("http://127.0.0.1:8000/api/login", data={"username": log_username, "password": log_password})
+                    resp = requests.post("http://backend:8000/api/login", data={"username": log_username, "password": log_password})
                     if resp.json().get("status") == "success":
                         st.session_state.candidate_name = log_username
                         st.rerun()
@@ -46,7 +46,7 @@ if not st.session_state.candidate_name:
         if st.button("Create Account"):
             if reg_username and reg_password:
                 with st.spinner("Encrypting credentials..."):
-                    resp = requests.post("http://127.0.0.1:8000/api/register", data={"username": reg_username, "password": reg_password})
+                    resp = requests.post("http://backend:8000/api/register", data={"username": reg_username, "password": reg_password})
                     if resp.json().get("status") == "success":
                         st.success("Account created successfully! Please switch to the Login tab.")
                     else:
@@ -88,7 +88,7 @@ if page == "Mock Interview":
                         # Sending the candidate name to the backend for the database
                         data = {"job_url": job_url, "job_role": job_role, "candidate_name": st.session_state.candidate_name}
                         
-                        response = requests.post("http://127.0.0.1:8000/api/analyze", data=data, files=files)
+                        response = requests.post("http://backend:8000/api/analyze", data=data, files=files)
                         
                         if response.status_code == 200 and response.json().get("status") == "success":
                             result = response.json()
@@ -144,7 +144,7 @@ if page == "Mock Interview":
                 with st.spinner("Grading your response..."):
                     try:
                         payload = {"question": st.session_state.current_question, "answer": user_answer}
-                        eval_response = requests.post("http://127.0.0.1:8000/api/chat", json=payload)
+                        eval_response = requests.post("http://backend:8000/api/chat", json=payload)
                         
                         if eval_response.status_code == 200 and eval_response.json().get("status") == "success":
                             ai_feedback = eval_response.json()["feedback"]
@@ -166,7 +166,7 @@ elif page == "Interview History":
         with st.spinner("Pulling records from cloud database..."):
             try:
                 # Dynamically passing your specific name to fetch only your records
-                response = requests.get(f"http://127.0.0.1:8000/api/history/{st.session_state.candidate_name}")
+                response = requests.get(f"http://backend:8000/api/history/{st.session_state.candidate_name}")
                 if response.status_code == 200 and response.json().get("status") == "success":
                     data = response.json()["data"]
                     
