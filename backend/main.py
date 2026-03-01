@@ -3,12 +3,13 @@ from pydantic import BaseModel
 import shutil
 import os
 
+
 # Import all 6 of our custom services
 from backend.services.pdf_parser import extract_text_from_pdf
 from backend.services.data_cleaner import clean_text
 from backend.services.scraper import scrape_job_description
 from backend.services.ml_engine import calculate_match_score, extract_missing_keywords
-from backend.services.db_service import log_interview_session
+from backend.services.db_service import log_interview_session, get_interview_history
 from backend.services.ai_service import generate_interview_question, evaluate_candidate_answer
 
 class ChatPayload(BaseModel):
@@ -70,6 +71,17 @@ async def chat_with_recruiter(payload: ChatPayload):
         return {
             "status": "success",
             "feedback": feedback
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/history")
+async def fetch_history():
+    try:
+        data = get_interview_history()
+        return {
+            "status": "success",
+            "data": data
         }
     except Exception as e:
         return {"status": "error", "message": str(e)}

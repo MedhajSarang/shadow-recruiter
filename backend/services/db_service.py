@@ -26,6 +26,16 @@ def log_interview_session(job_role: str, match_score: float, missing_skills: lis
     except Exception as e:
         return f"Database Error: {str(e)}"
 
+def get_interview_history():
+    """Fetches the 10 most recent interview sessions from Supabase."""
+    try:
+        supabase = get_db_client()
+        # Fetch data, order by newest first, limit to 10 rows
+        response = supabase.table("interviews").select("*").order("created_at", desc=True).limit(10).execute()
+        return response.data
+    except Exception as e:
+        return f"Database Fetch Error: {str(e)}"
+
 # --- TEST BLOCK ---
 if __name__ == "__main__":
     print("Testing Database Insertion...\n")
