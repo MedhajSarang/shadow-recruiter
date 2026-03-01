@@ -20,15 +20,40 @@ if "candidate_name" not in st.session_state:
 
 # --- LOGIN GATE ---
 if not st.session_state.candidate_name:
-    st.warning("Authentication Required")
-    name_input = st.text_input("Enter your full name to access your workspace:")
-    if st.button("Enter Workspace"):
-        if name_input.strip():
-            st.session_state.candidate_name = name_input.strip()
-            st.rerun()
-        else:
-            st.error("Name cannot be blank.")
-    st.stop() # This completely halts the UI until they log in
+    st.markdown("### Authentication Required")
+    
+    # Create tabs for Login vs Registration
+    tab1, tab2 = st.tabs(["Login", "Register"])
+    
+    with tab1:
+        log_username = st.text_input("Username", key="log_user")
+        log_password = st.text_input("Password", type="password", key="log_pass")
+        if st.button("Secure Login"):
+            if log_username and log_password:
+                with st.spinner("Authenticating..."):
+                    resp = requests.post("http://127.0.0.1:8000/api/login", data={"username": log_username, "password": log_password})
+                    if resp.json().get("status") == "success":
+                        st.session_state.candidate_name = log_username
+                        st.rerun()
+                    else:
+                        st.error(resp.json().get("message"))
+            else:
+                st.warning("Please enter both fields.")
+
+    with tab2:
+        reg_username = st.text_input("New Username", key="reg_user")
+        reg_password = st.text_input("New Password", type="password", key="reg_pass")
+        if st.button("Create Account"):
+            if reg_username and reg_password:
+                with st.spinner("Encrypting credentials..."):
+                    resp = requests.post("http://127.0.0.1:8000/api/register", data={"username": reg_username, "password": reg_password})
+                    if resp.json().get("status") == "success":
+                        st.success("Account created successfully! Please switch to the Login tab.")
+                    else:
+                        st.error(resp.json().get("message"))
+            else:
+                st.warning("Please enter both fields.")
+    st.stop()
 
 # --- NAVIGATION ---
 st.sidebar.title("Navigation")

@@ -11,6 +11,7 @@ from backend.services.scraper import scrape_job_description
 from backend.services.ml_engine import calculate_match_score, extract_missing_keywords
 from backend.services.db_service import log_interview_session, get_interview_history
 from backend.services.ai_service import generate_interview_question, evaluate_candidate_answer
+from backend.services.auth_service import register_user, authenticate_user
 
 class ChatPayload(BaseModel):
     question: str
@@ -86,3 +87,11 @@ async def fetch_history(candidate_name: str):
         }
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+@app.post("/api/register")
+async def api_register(username: str = Form(...), password: str = Form(...)):
+    return register_user(username, password)
+
+@app.post("/api/login")
+async def api_login(username: str = Form(...), password: str = Form(...)):
+    return authenticate_user(username, password)
