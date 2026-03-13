@@ -1,6 +1,12 @@
+import os
 import streamlit as st
 import requests
 import pandas as pd
+
+# --- API CONFIGURATION ---
+# This looks for your live Render URL in Streamlit Secrets. 
+# If it can't find one (like when testing locally), it defaults to Docker.
+API_URL = os.environ.get("API_URL", "http://backend:8000")
 
 st.set_page_config(page_title="Shadow Recruiter", page_icon="🤖", layout="wide")
 
@@ -22,7 +28,6 @@ if "candidate_name" not in st.session_state:
 if not st.session_state.candidate_name:
     st.markdown("### Authentication Required")
     
-    # Create tabs for Login vs Registration
     tab1, tab2 = st.tabs(["Login", "Register"])
     
     with tab1:
@@ -31,12 +36,15 @@ if not st.session_state.candidate_name:
         if st.button("Secure Login"):
             if log_username and log_password:
                 with st.spinner("Authenticating..."):
-                    resp = requests.post("https://shadow-recruiter.onrender.com/api/login", data={"username": log_username, "password": log_password})
-                    if resp.json().get("status") == "success":
-                        st.session_state.candidate_name = log_username
-                        st.rerun()
-                    else:
-                        st.error(resp.json().get("message"))
+                    try:
+                        resp = requests.post(f"{API_URL}/api/login", data={"username": log_username, "password": log_password})
+                        if resp.json().get("status") == "success":
+                            st.session_state.candidate_name = log_username
+                            st.rerun()
+                        else:
+                            st.error(resp.json().get("message"))
+                    except Exception as e:
+                        st.error(f"Connection Failed. Check your API_URL. Error: {e}")
             else:
                 st.warning("Please enter both fields.")
 
@@ -46,11 +54,14 @@ if not st.session_state.candidate_name:
         if st.button("Create Account"):
             if reg_username and reg_password:
                 with st.spinner("Encrypting credentials..."):
-                    resp = requests.post("https://shadow-recruiter.onrender.com/api/register", data={"username": reg_username, "password": reg_password})
-                    if resp.json().get("status") == "success":
-                        st.success("Account created successfully! Please switch to the Login tab.")
-                    else:
-                        st.error(resp.json().get("message"))
+                    try:
+                        resp = requests.post(f"{API_URL}/api/register", data={"username": reg_username, "password": reg_password})
+                        if resp.json().get("status") == "success":
+                            st.success("Account created successfully! Please switch to the Login tab.")
+                        else:
+                            st.error(resp.json().get("message"))
+                    except Exception as e:
+                        st.error(f"Connection Failed. Check your API_URL. Error: {e}")
             else:
                 st.warning("Please enter both fields.")
     st.stop()
@@ -80,15 +91,13 @@ if page == "Mock Interview":
             resume_pdf = st.file_uploader("Upload Your Resume (PDF):", type=["pdf"])
 
         if st.button("Initialize Shadow Recruiter"):
-            # If everything is filled, proceed. If not, hit the else block below.
             if job_url and job_role and resume_pdf:
                 with st.spinner("Analyzing application... This takes about 10 seconds."):
                     try:
                         files = {"resume": (resume_pdf.name, resume_pdf.getvalue(), "application/pdf")}
-                        # Sending the candidate name to the backend for the database
                         data = {"job_url": job_url, "job_role": job_role, "candidate_name": st.session_state.candidate_name}
                         
-                        response = requests.post("https://shadow-recruiter.onrender.com/api/analyze", data=data, files=files)
+                        response = requests.post(f"{API_URL}/api/analyze", data=data, files=files)
                         
                         if response.status_code == 200 and response.json().get("status") == "success":
                             result = response.json()
@@ -105,7 +114,6 @@ if page == "Mock Interview":
             else:
                 st.warning("Strict requirement: Provide Job URL, Job Role, and Resume PDF.")
 
-    # Show the dashboard only after the analysis is done
     if st.session_state.analysis_complete:
         if st.sidebar.button("Reset Current Interview"):
             st.session_state.clear()
@@ -144,7 +152,7 @@ if page == "Mock Interview":
                 with st.spinner("Grading your response..."):
                     try:
                         payload = {"question": st.session_state.current_question, "answer": user_answer}
-                        eval_response = requests.post("https://shadow-recruiter.onrender.com/api/chat", json=payload)
+                        eval_response = requests.post(f"{API_URL}/api/chat", json=payload)
                         
                         if eval_response.status_code == 200 and eval_response.json().get("status") == "success":
                             ai_feedback = eval_response.json()["feedback"]
@@ -165,8 +173,7 @@ elif page == "Interview History":
     if st.button("Fetch Latest Data"):
         with st.spinner("Pulling records from cloud database..."):
             try:
-                # Dynamically passing your specific name to fetch only your records
-                response = requests.get(f"https://shadow-recruiter.onrender.com/api/history/{st.session_state.candidate_name}")
+                response = requests.get(f"{API_URL}/api/history/{st.session_state.candidate_name}")
                 if response.status_code == 200 and response.json().get("status") == "success":
                     data = response.json()["data"]
                     
