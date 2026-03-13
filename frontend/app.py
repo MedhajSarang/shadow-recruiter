@@ -6,7 +6,17 @@ import pandas as pd
 # --- API CONFIGURATION ---
 # This looks for your live Render URL in Streamlit Secrets. 
 # If it can't find one (like when testing locally), it defaults to Docker.
-API_URL = os.environ.get("API_URL", "http://backend:8000")
+#API_URL = os.environ.get("API_URL", "http://backend:8000")
+# Use Streamlit's native secrets first, fallback to Docker if local
+if "API_URL" in st.secrets:
+    API_URL = st.secrets["API_URL"]
+else:
+    API_URL = os.environ.get("API_URL", "http://backend:8000")
+
+st.set_page_config(page_title="Shadow Recruiter", page_icon="🤖", layout="wide")
+
+# --- SANITY CHECK (We will delete this later) ---
+st.info(f"Diagnostic - App is trying to connect to: {API_URL}")
 
 st.set_page_config(page_title="Shadow Recruiter", page_icon="🤖", layout="wide")
 
