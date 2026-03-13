@@ -9,7 +9,7 @@ import pandas as pd
 #API_URL = os.environ.get("API_URL", "http://backend:8000")
 # Use Streamlit's native secrets first, fallback to Docker if local
 if "API_URL" in st.secrets:
-    API_URL = st.secrets["API_URL"]
+    API_URL = st.secrets["API_URL"].strip()
 else:
     API_URL = os.environ.get("API_URL", "http://backend:8000")
 
