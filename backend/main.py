@@ -1,6 +1,7 @@
 from fastapi import FastAPI, File, UploadFile, Form
 from pydantic import BaseModel
 import shutil
+from database import get_db_client
 import os
 
 
@@ -96,10 +97,11 @@ async def api_register(username: str = Form(...), password: str = Form(...)):
 async def api_login(username: str = Form(...), password: str = Form(...)):
     return authenticate_user(username, password)
 
-@app.get("/api/keepalive")
+@app.get("/api/keepalive", methods=["GET", "HEAD"])
 def keep_alive():
     """Hidden endpoint for UptimeRobot to ping, keeping Render & Supabase awake."""
     try:
+        supabase = get_db_client
         supabase.table("users").select("*").limit(1).execute()
         return {"status": "alive", "database": "awake"}
     except Exception as e:
