@@ -95,3 +95,12 @@ async def api_register(username: str = Form(...), password: str = Form(...)):
 @app.post("/api/login")
 async def api_login(username: str = Form(...), password: str = Form(...)):
     return authenticate_user(username, password)
+
+@app.get("/api/keepalive")
+def keep_alive():
+    """Hidden endpoint for UptimeRobot to ping, keeping Render & Supabase awake."""
+    try:
+        supabase.table("users").select("*").limit(1).execute()
+        return {"status": "alive", "database": "awake"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
