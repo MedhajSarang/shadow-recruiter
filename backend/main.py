@@ -97,12 +97,16 @@ async def api_register(username: str = Form(...), password: str = Form(...)):
 async def api_login(username: str = Form(...), password: str = Form(...)):
     return authenticate_user(username, password)
 
-@app.get("/api/keepalive", methods=["GET", "HEAD"])
+@app.api_route("/api/keepalive", methods=["GET", "HEAD"])
 def keep_alive():
     """Hidden endpoint for UptimeRobot to ping, keeping Render & Supabase awake."""
     try:
-        supabase = get_db_client
-        supabase.table("users").select("*").limit(1).execute()
+        # 1. THIS IS THE LINE THAT IS MISSING IN THE CLOUD:
+        supabase_client = get_db_client() 
+        
+        # 2. Now we use the client we just created:
+        supabase_client.table("users").select("*").limit(1).execute()
+        
         return {"status": "alive", "database": "awake"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
