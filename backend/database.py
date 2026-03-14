@@ -18,9 +18,6 @@ def get_db_client() -> Client:
     if not url or not key:
         raise ValueError("CRITICAL ERROR: Supabase credentials not found in .env file or Render Environment")
     
-    # We will print this to the Render logs to verify exactly what it is trying to dial
-    print(f"DIAGNOSTIC - Backend dialing Supabase at: [{url}]")
-    
     return create_client(url, key)
 
 # --- TEST BLOCK ---
