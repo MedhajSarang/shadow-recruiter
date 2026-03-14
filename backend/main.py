@@ -1,7 +1,7 @@
 from fastapi import FastAPI, File, UploadFile, Form
 from pydantic import BaseModel
 import shutil
-from database import get_db_client
+from backend.database import get_db_client
 import os
 
 
